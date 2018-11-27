@@ -3,6 +3,7 @@ package header
 import (
 	"encoding/binary"
 	"fmt"
+	"errors"
 )
 
 // Represents a TCP header
@@ -10,12 +11,14 @@ import (
 type TCPHeader struct {
 	Raw      []byte
 	Modified bool
+	Payload []byte
 }
 
 func NewTCPHeader(raw []byte) *TCPHeader {
 	hdrLen := raw[12] >> 2
 	return &TCPHeader{
 		Raw: raw[:hdrLen],
+		Payload:raw[hdrLen:],
 	}
 }
 
@@ -52,6 +55,21 @@ func (h *TCPHeader) SrcPort() (uint16, error) {
 // Reads the header's bytes and returns the destination port
 func (h *TCPHeader) DstPort() (uint16, error) {
 	return binary.BigEndian.Uint16(h.Raw[2:4]), nil
+}
+
+func (h *TCPHeader) GetPayload() ([]byte){
+	return h.Payload
+}
+
+func (h *TCPHeader) SetPayload(payload []byte) error{
+	if(len(payload) != len(h.Payload)){
+		return errors.New("payload length error")
+	}
+	h.Modified = true
+	for i,b := range payload{
+		h.Payload[i] = b
+	}
+	return nil
 }
 
 // Sets the source port
